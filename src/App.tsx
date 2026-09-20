@@ -4,7 +4,7 @@ import { generateInitialBatch } from './mocks/jobData'
 import { JobFeed } from './components/JobFeed'
 
 export default function App() {
-  const [jobs] = useState<Job[]>(() => generateInitialBatch(15))
+  const [jobs] = useState<Job[]>(() => generateInitialBatch(40))
   const [savedJobIds, setSavedJobIds] = useState<Set<string>>(new Set())
 
   const handleToggleSave = (id: string) => {

@@ -72,46 +72,54 @@ export const JobFeed: React.FC<JobFeedProps> = ({
 
   // Virtualized list state
   return (
-    <div
-      ref={parentRef}
-      className={`overflow-y-auto h-[calc(100vh-280px)] min-h-[420px] rounded-xl pr-1 focus:outline-none ${className}`.trim()}
-      role="feed"
-      aria-label="Job listings feed"
-    >
+    <div className={`relative ${className}`.trim()}>
       <div
-        style={{
-          height: `${rowVirtualizer.getTotalSize()}px`,
-          width: '100%',
-          position: 'relative',
-        }}
+        ref={parentRef}
+        className="job-feed-scroll overflow-y-auto h-[calc(100vh-280px)] min-h-[420px] rounded-xl pr-1 focus:outline-none"
+        role="feed"
+        aria-label="Job listings feed"
       >
-        {rowVirtualizer.getVirtualItems().map((virtualItem) => {
-          const job = jobs[virtualItem.index]
-          return (
-            <div
-              key={job.id}
-              data-index={virtualItem.index}
-              ref={rowVirtualizer.measureElement}
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                transform: `translateY(${virtualItem.start}px)`,
-                paddingBottom: '16px',
-              }}
-            >
-              <JobCard
-                job={job}
-                isSaved={savedJobIds.has(job.id)}
-                isPending={pendingSaveIds.has(job.id)}
-                isNew={newJobIds.has(job.id)}
-                onToggleSave={onToggleSave}
-              />
-            </div>
-          )
-        })}
+        <div
+          style={{
+            height: `${rowVirtualizer.getTotalSize()}px`,
+            width: '100%',
+            position: 'relative',
+          }}
+        >
+          {rowVirtualizer.getVirtualItems().map((virtualItem) => {
+            const job = jobs[virtualItem.index]
+            return (
+              <div
+                key={job.id}
+                data-index={virtualItem.index}
+                ref={rowVirtualizer.measureElement}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  transform: `translateY(${virtualItem.start}px)`,
+                  paddingBottom: '16px',
+                }}
+              >
+                <JobCard
+                  job={job}
+                  isSaved={savedJobIds.has(job.id)}
+                  isPending={pendingSaveIds.has(job.id)}
+                  isNew={newJobIds.has(job.id)}
+                  onToggleSave={onToggleSave}
+                />
+              </div>
+            )
+          })}
+        </div>
       </div>
+
+      {/* Subtle bottom fade: gradient overlay preventing abrupt card clipping */}
+      <div
+        className="pointer-events-none absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-background to-transparent rounded-b-xl"
+        aria-hidden="true"
+      />
     </div>
   )
 }

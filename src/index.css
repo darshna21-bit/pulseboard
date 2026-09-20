@@ -33,3 +33,26 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* Custom dark scrollbar for virtualized job feed */
+.job-feed-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+.job-feed-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.job-feed-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.job-feed-scroll::-webkit-scrollbar-thumb {
+  background-color: var(--color-border);
+  border-radius: 9999px;
+}
+
+.job-feed-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-text-faint);
+}
