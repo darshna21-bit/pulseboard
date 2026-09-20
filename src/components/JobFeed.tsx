@@ -1,4 +1,5 @@
-import React from 'react'
+import React, { useRef } from 'react'
+import { useVirtualizer } from '@tanstack/react-virtual'
 import type { Job } from '../types/job'
 import { JobCard } from './JobCard'
 import { Card } from './ui/Card'
@@ -23,6 +24,15 @@ export const JobFeed: React.FC<JobFeedProps> = ({
   onToggleSave = () => {},
   className = '',
 }) => {
+  const parentRef = useRef<HTMLDivElement>(null)
+
+  const rowVirtualizer = useVirtualizer({
+    count: jobs.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 190,
+    overscan: 6,
+  })
+
   // Loading state: render 4 skeleton placeholders
   if (isLoading) {
     return (
@@ -60,19 +70,48 @@ export const JobFeed: React.FC<JobFeedProps> = ({
     )
   }
 
-  // Active list state
+  // Virtualized list state
   return (
-    <div className={`flex flex-col gap-4 ${className}`.trim()} role="feed" aria-label="Job listings feed">
-      {jobs.map((job) => (
-        <JobCard
-          key={job.id}
-          job={job}
-          isSaved={savedJobIds.has(job.id)}
-          isPending={pendingSaveIds.has(job.id)}
-          isNew={newJobIds.has(job.id)}
-          onToggleSave={onToggleSave}
-        />
-      ))}
+    <div
+      ref={parentRef}
+      className={`overflow-y-auto h-[calc(100vh-280px)] min-h-[420px] rounded-xl pr-1 focus:outline-none ${className}`.trim()}
+      role="feed"
+      aria-label="Job listings feed"
+    >
+      <div
+        style={{
+          height: `${rowVirtualizer.getTotalSize()}px`,
+          width: '100%',
+          position: 'relative',
+        }}
+      >
+        {rowVirtualizer.getVirtualItems().map((virtualItem) => {
+          const job = jobs[virtualItem.index]
+          return (
+            <div
+              key={job.id}
+              data-index={virtualItem.index}
+              ref={rowVirtualizer.measureElement}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                transform: `translateY(${virtualItem.start}px)`,
+                paddingBottom: '16px',
+              }}
+            >
+              <JobCard
+                job={job}
+                isSaved={savedJobIds.has(job.id)}
+                isPending={pendingSaveIds.has(job.id)}
+                isNew={newJobIds.has(job.id)}
+                onToggleSave={onToggleSave}
+              />
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
