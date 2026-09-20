@@ -1,14 +1,62 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Job, WorkMode } from './types/job'
 import { generateInitialBatch } from './mocks/jobData'
 import { JobFeed } from './components/JobFeed'
 import { SearchBar } from './components/SearchBar'
 import { FilterPanel } from './components/FilterPanel'
+import { ConnectionStatus } from './components/ConnectionStatus'
 import { useDebounce } from './hooks/useDebounce'
+import { useJobSocket } from './hooks/useJobSocket'
+import { useSavedJobs } from './hooks/useSavedJobs'
 
 export default function App() {
-  const [jobs] = useState<Job[]>(() => generateInitialBatch(40))
-  const [savedJobIds, setSavedJobIds] = useState<Set<string>>(new Set())
+  // Live job stream state, seeded with initial 15 jobs, capped at 400
+  const [jobs, setJobs] = useState<Job[]>(() => generateInitialBatch(15))
+  const [newJobIds, setNewJobIds] = useState<Set<string>>(new Set())
+
+  // Timers to clear the temporary "isNew" highlight after ~4 seconds
+  const newJobTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
+
+  useEffect(() => {
+    const timers = newJobTimersRef.current
+    return () => {
+      timers.forEach((timer) => clearTimeout(timer))
+      timers.clear()
+    }
+  }, [])
+
+  // Callback for live incoming WebSocket jobs
+  const handleNewJob = useCallback((incomingJob: Job) => {
+    setJobs((prev) => {
+      // Prevent duplicate job IDs in telemetry
+      if (prev.some((j) => j.id === incomingJob.id)) return prev
+      return [incomingJob, ...prev].slice(0, 400)
+    })
+
+    // Highlight card with isNew for ~4 seconds
+    setNewJobIds((prev) => {
+      const next = new Set(prev)
+      next.add(incomingJob.id)
+      return next
+    })
+
+    const timer = setTimeout(() => {
+      setNewJobIds((prev) => {
+        const next = new Set(prev)
+        next.delete(incomingJob.id)
+        return next
+      })
+      newJobTimersRef.current.delete(incomingJob.id)
+    }, 4000)
+
+    newJobTimersRef.current.set(incomingJob.id, timer)
+  }, [])
+
+  // Owns real-time connection lifecycle & auto-reconnect backoff
+  const { connection } = useJobSocket(handleNewJob)
+
+  // Owns optimistic bookmark state with automated error rollback
+  const { savedIds, pendingIds, toggleSave } = useSavedJobs()
 
   // Search & Filter state
   const [searchInput, setSearchInput] = useState('')
@@ -23,18 +71,6 @@ export default function App() {
         next.delete(mode)
       } else {
         next.add(mode)
-      }
-      return next
-    })
-  }
-
-  const handleToggleSave = (id: string) => {
-    setSavedJobIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) {
-        next.delete(id)
-      } else {
-        next.add(id)
       }
       return next
     })
@@ -65,26 +101,29 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-background text-text">
-      {/* Centered responsive container: full width with comfortable padding on mobile, capped max-width on desktop */}
+      {/* Centered responsive container: full width on mobile, capped max-width on desktop */}
       <main className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Header section */}
-        <header className="mb-6 flex flex-col gap-1 border-b border-border-soft pb-5 sm:flex-row sm:items-center sm:justify-between">
+        {/* Header section with live connection status pill and dynamic stats */}
+        <header className="mb-6 flex flex-col gap-2 border-b border-border-soft pb-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="font-display text-2xl font-bold tracking-tight text-text">
-              Pulseboard
-            </h1>
+            <div className="flex items-center gap-3">
+              <h1 className="font-display text-2xl font-bold tracking-tight text-text">
+                Pulseboard
+              </h1>
+              <ConnectionStatus connection={connection} />
+            </div>
             <p className="mt-1 text-sm text-text-muted">
               Live engineering telemetry and real-time job stream
             </p>
           </div>
 
-          <div className="mt-3 flex items-center gap-3 sm:mt-0">
+          <div className="mt-2 flex items-center gap-3 sm:mt-0">
             <span className="inline-flex items-center rounded-full bg-surface-raised px-3 py-1 text-xs font-medium text-text-muted border border-border-soft">
               {jobs.length} roles active
             </span>
-            {savedJobIds.size > 0 && (
+            {savedIds.size > 0 && (
               <span className="inline-flex items-center rounded-full bg-signal/15 px-3 py-1 text-xs font-medium text-signal border border-signal/30">
-                {savedJobIds.size} saved
+                {savedIds.size} saved
               </span>
             )}
           </div>
@@ -122,11 +161,13 @@ export default function App() {
           )}
         </div>
 
-        {/* Virtualized Job Feed receiving derived filteredJobs */}
+        {/* Virtualized Job Feed receiving live derived filteredJobs and optimistic save states */}
         <JobFeed
           jobs={filteredJobs}
-          savedJobIds={savedJobIds}
-          onToggleSave={handleToggleSave}
+          savedJobIds={savedIds}
+          pendingSaveIds={pendingIds}
+          newJobIds={newJobIds}
+          onToggleSave={toggleSave}
         />
       </main>
     </div>
