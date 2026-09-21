@@ -99,6 +99,8 @@ export const JobCard: React.FC<JobCardProps> = ({
         >
           <svg
             className={`h-5 w-5 ${isSaved ? 'fill-signal stroke-signal' : 'fill-none stroke-current'}`}
+            width="20"
+            height="20"
             viewBox="0 0 24 24"
             strokeWidth={1.75}
             strokeLinecap="round"

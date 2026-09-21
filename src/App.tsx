@@ -10,9 +10,25 @@ import { useJobSocket } from './hooks/useJobSocket'
 import { useSavedJobs } from './hooks/useSavedJobs'
 
 export default function App() {
-  // Live job stream state, seeded with initial 15 jobs, capped at 400
-  const [jobs, setJobs] = useState<Job[]>(() => generateInitialBatch(15))
+  // Realistic initial loading simulation (shows skeletons for ~650ms)
+  const [isInitialLoading, setIsInitialLoading] = useState(true)
+  const [jobs, setJobs] = useState<Job[]>([])
   const [newJobIds, setNewJobIds] = useState<Set<string>>(new Set())
+
+  // Initial fetch simulation
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setJobs((prev) => {
+        const initial = generateInitialBatch(15)
+        const existingIds = new Set(prev.map((j) => j.id))
+        const deduplicated = initial.filter((j) => !existingIds.has(j.id))
+        return [...prev, ...deduplicated].slice(0, 400)
+      })
+      setIsInitialLoading(false)
+    }, 650) // 500-800ms loading realism window
+
+    return () => clearTimeout(timer)
+  }, [])
 
   // Timers to clear the temporary "isNew" highlight after ~4 seconds
   const newJobTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
@@ -76,6 +92,12 @@ export default function App() {
     })
   }
 
+  const handleResetFilters = () => {
+    setSearchInput('')
+    setActiveModes(new Set())
+    setMinMatch(0)
+  }
+
   // Derive filtered jobs with useMemo
   const filteredJobs = useMemo(() => {
     const query = debouncedSearch.trim().toLowerCase()
@@ -99,6 +121,9 @@ export default function App() {
     })
   }, [jobs, debouncedSearch, activeModes, minMatch])
 
+  const hasActiveFilters = Boolean(debouncedSearch || activeModes.size > 0 || minMatch > 0)
+  const isFilteredEmpty = !isInitialLoading && jobs.length > 0 && filteredJobs.length === 0
+
   return (
     <div className="min-h-screen bg-background text-text">
       {/* Centered responsive container: full width on mobile, capped max-width on desktop */}
@@ -119,7 +144,7 @@ export default function App() {
 
           <div className="mt-2 flex items-center gap-3 sm:mt-0">
             <span className="inline-flex items-center rounded-full bg-surface-raised px-3 py-1 text-xs font-medium text-text-muted border border-border-soft">
-              {jobs.length} roles active
+              {isInitialLoading ? 'Fetching...' : `${jobs.length} roles active`}
             </span>
             {savedIds.size > 0 && (
               <span className="inline-flex items-center rounded-full bg-signal/15 px-3 py-1 text-xs font-medium text-signal border border-signal/30">
@@ -143,27 +168,33 @@ export default function App() {
         {/* Count indicator above the feed */}
         <div className="mb-3 flex items-center justify-between text-xs text-text-muted px-0.5">
           <span>
-            Showing <strong className="font-semibold text-text">{filteredJobs.length}</strong> of{' '}
-            <strong className="font-semibold text-text">{jobs.length}</strong> jobs
+            {isInitialLoading ? (
+              <span>Loading telemetry feed...</span>
+            ) : (
+              <span>
+                Showing <strong className="font-semibold text-text">{filteredJobs.length}</strong> of{' '}
+                <strong className="font-semibold text-text">{jobs.length}</strong> jobs
+              </span>
+            )}
           </span>
-          {(debouncedSearch || activeModes.size > 0 || minMatch > 0) && (
+          {hasActiveFilters && (
             <button
               type="button"
-              onClick={() => {
-                setSearchInput('')
-                setActiveModes(new Set())
-                setMinMatch(0)
-              }}
-              className="text-xs text-signal hover:underline cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-signal rounded"
+              onClick={handleResetFilters}
+              aria-label="Reset all search and filter settings"
+              className="text-xs text-signal hover:underline cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal rounded px-1"
             >
               Reset filters
             </button>
           )}
         </div>
 
-        {/* Virtualized Job Feed receiving live derived filteredJobs and optimistic save states */}
+        {/* Virtualized Job Feed receiving live derived filteredJobs, loading state, and optimistic save states */}
         <JobFeed
           jobs={filteredJobs}
+          isLoading={isInitialLoading}
+          isFiltered={isFilteredEmpty}
+          onResetFilters={handleResetFilters}
           savedJobIds={savedIds}
           pendingSaveIds={pendingIds}
           newJobIds={newJobIds}

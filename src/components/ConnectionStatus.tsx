@@ -51,6 +51,7 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
       role="status"
       aria-live="polite"
       aria-atomic="true"
+      aria-label={`Connection status: ${label}`}
       className={`inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-xs font-medium border transition-colors ${badgeStyles} ${className}`.trim()}
     >
       <span className="relative flex h-2 w-2">

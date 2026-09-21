@@ -18,6 +18,8 @@ export const SearchBar: React.FC<SearchBarProps> = ({
       <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-text-muted">
         <svg
           className="h-4 w-4 stroke-current fill-none"
+          width="16"
+          height="16"
           viewBox="0 0 24 24"
           strokeWidth={2}
           strokeLinecap="round"
@@ -44,10 +46,12 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           type="button"
           onClick={() => onChange('')}
           aria-label="Clear search input"
-          className="absolute inset-y-0 right-0 flex items-center pr-3 text-text-muted hover:text-text cursor-pointer focus-visible:outline-none focus-visible:text-signal"
+          className="absolute inset-y-0 right-2 my-auto flex h-7 w-7 items-center justify-center rounded text-text-muted hover:text-text cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal"
         >
           <svg
             className="h-4 w-4 stroke-current fill-none"
+            width="16"
+            height="16"
             viewBox="0 0 24 24"
             strokeWidth={2}
             strokeLinecap="round"

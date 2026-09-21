@@ -8,6 +8,8 @@ import { JobCardSkeleton } from './ui/Skeleton'
 export interface JobFeedProps {
   jobs: Job[]
   isLoading?: boolean
+  isFiltered?: boolean
+  onResetFilters?: () => void
   savedJobIds?: Set<string>
   pendingSaveIds?: Set<string>
   newJobIds?: Set<string>
@@ -18,6 +20,8 @@ export interface JobFeedProps {
 export const JobFeed: React.FC<JobFeedProps> = ({
   jobs,
   isLoading = false,
+  isFiltered = false,
+  onResetFilters,
   savedJobIds = new Set(),
   pendingSaveIds = new Set(),
   newJobIds = new Set(),
@@ -52,6 +56,8 @@ export const JobFeed: React.FC<JobFeedProps> = ({
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-raised text-signal mb-3 border border-border-soft">
           <svg
             className="h-6 w-6 stroke-current fill-none"
+            width="24"
+            height="24"
             viewBox="0 0 24 24"
             strokeWidth={1.75}
             strokeLinecap="round"
@@ -62,10 +68,23 @@ export const JobFeed: React.FC<JobFeedProps> = ({
             <path d="M12 6v6l4 2" />
           </svg>
         </div>
-        <h3 className="font-display text-base font-semibold text-text">No jobs in feed</h3>
+        <h3 className="font-display text-base font-semibold text-text">
+          {isFiltered ? 'No matching roles found' : 'No jobs in feed'}
+        </h3>
         <p className="mt-1.5 max-w-sm text-sm text-text-muted">
-          Waiting for live telemetry updates. Incoming engineering positions will stream directly into this feed.
+          {isFiltered
+            ? 'No engineering jobs match your current search and filter criteria. Try adjusting keywords, lowering the match threshold, or selecting additional work modes.'
+            : 'Waiting for live telemetry updates. Incoming engineering positions will stream directly into this feed.'}
         </p>
+        {isFiltered && onResetFilters && (
+          <button
+            type="button"
+            onClick={onResetFilters}
+            className="mt-4 inline-flex items-center rounded-lg bg-surface-raised px-3.5 py-1.5 text-xs font-medium text-signal border border-signal/30 hover:bg-signal/15 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal"
+          >
+            Reset all filters
+          </button>
+        )}
       </Card>
     )
   }

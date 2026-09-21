@@ -61,8 +61,12 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
           step={5}
           value={minMatch}
           onChange={(e) => onMinMatchChange(Number(e.target.value))}
-          className="h-1.5 w-28 sm:w-32 cursor-pointer accent-signal bg-surface-raised rounded-lg appearance-none border border-border-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal"
           aria-label="Minimum match score filter"
+          aria-valuemin={0}
+          aria-valuemax={95}
+          aria-valuenow={minMatch}
+          aria-valuetext={`${minMatch}% match`}
+          className="h-1.5 w-28 sm:w-32 cursor-pointer accent-signal bg-surface-raised rounded-lg appearance-none border border-border-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         />
       </div>
     </div>
