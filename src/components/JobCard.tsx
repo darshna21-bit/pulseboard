@@ -9,6 +9,8 @@ export interface JobCardProps {
   isPending: boolean
   isNew: boolean
   onToggleSave: (id: string) => void
+  ariaPosInset?: number
+  ariaSetSize?: number
 }
 
 function formatRelativeTime(timestampMs: number): string {
@@ -28,22 +30,33 @@ export const JobCard: React.FC<JobCardProps> = ({
   isPending,
   isNew,
   onToggleSave,
+  ariaPosInset,
+  ariaSetSize,
 }) => {
   const newCardStyles = isNew
     ? 'border-signal/40 bg-surface-raised/40 ring-1 ring-signal/20'
     : 'border-border-soft bg-surface'
 
+  const titleId = `job-title-${job.id}`
+
   return (
     <Card
+      role="article"
+      aria-labelledby={titleId}
+      aria-posinset={ariaPosInset}
+      aria-setsize={ariaSetSize}
       className={`relative transition-all duration-200 hover:border-border ${newCardStyles}`}
     >
       {/* Top row: Title, company/location, and MatchBadge */}
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <h3 className="font-display text-lg font-semibold tracking-tight text-text truncate">
+            <h2
+              id={titleId}
+              className="font-display text-lg font-semibold tracking-tight text-text truncate"
+            >
               {job.title}
-            </h3>
+            </h2>
             {isNew && (
               <span className="inline-flex items-center rounded-full bg-signal/15 px-2 py-0.5 text-[10px] font-semibold tracking-wider text-signal uppercase">
                 New

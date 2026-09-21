@@ -68,9 +68,9 @@ export const JobFeed: React.FC<JobFeedProps> = ({
             <path d="M12 6v6l4 2" />
           </svg>
         </div>
-        <h3 className="font-display text-base font-semibold text-text">
+        <h2 className="font-display text-base font-semibold text-text">
           {isFiltered ? 'No matching roles found' : 'No jobs in feed'}
-        </h3>
+        </h2>
         <p className="mt-1.5 max-w-sm text-sm text-text-muted">
           {isFiltered
             ? 'No engineering jobs match your current search and filter criteria. Try adjusting keywords, lowering the match threshold, or selecting additional work modes.'
@@ -97,8 +97,10 @@ export const JobFeed: React.FC<JobFeedProps> = ({
         className="job-feed-scroll overflow-y-auto h-[calc(100vh-280px)] min-h-[420px] rounded-xl pr-1 focus:outline-none"
         role="feed"
         aria-label="Job listings feed"
+        aria-busy={isLoading}
       >
         <div
+          role="presentation"
           style={{
             height: `${rowVirtualizer.getTotalSize()}px`,
             width: '100%',
@@ -110,6 +112,7 @@ export const JobFeed: React.FC<JobFeedProps> = ({
             return (
               <div
                 key={job.id}
+                role="presentation"
                 data-index={virtualItem.index}
                 ref={rowVirtualizer.measureElement}
                 style={{
@@ -127,6 +130,8 @@ export const JobFeed: React.FC<JobFeedProps> = ({
                   isPending={pendingSaveIds.has(job.id)}
                   isNew={newJobIds.has(job.id)}
                   onToggleSave={onToggleSave}
+                  ariaPosInset={virtualItem.index + 1}
+                  ariaSetSize={jobs.length}
                 />
               </div>
             )
