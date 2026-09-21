@@ -208,20 +208,9 @@ export default function App() {
   const isFilteredEmpty = !isInitialLoading && jobs.length > 0 && filteredJobs.length === 0
 
   return (
-    <div className="relative min-h-screen bg-background text-text">
-      {/* Subtle background dot-grid pattern behind the whole app (pure CSS, opacity ~3-4%, --color-border dots) */}
-      <div
-        className="pointer-events-none fixed inset-0 z-0 bg-dot-grid"
-        style={{
-          backgroundImage: 'radial-gradient(var(--color-border) 1px, transparent 1px)',
-          backgroundSize: '24px 24px',
-          opacity: 0.04,
-        }}
-        aria-hidden="true"
-      />
-
+    <div className="min-h-screen bg-background text-text">
       {/* Centered responsive container: full width on mobile, capped max-width on desktop */}
-      <main className="relative z-10 mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
+      <main className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Header section with live connection status pill and dynamic stats */}
         <header className="mb-6 flex flex-col gap-2 border-b border-border-soft pb-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
