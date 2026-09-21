@@ -5,6 +5,7 @@ import { JobFeed } from './components/JobFeed'
 import { SearchBar } from './components/SearchBar'
 import { FilterPanel } from './components/FilterPanel'
 import { ConnectionStatus } from './components/ConnectionStatus'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import { Input } from './components/ui/Input'
 import { useDebounce } from './hooks/useDebounce'
 import { useJobSocket } from './hooks/useJobSocket'
@@ -139,6 +140,7 @@ export default function App() {
   const debouncedSearch = useDebounce(searchInput, 300)
   const [activeModes, setActiveModes] = useState<Set<WorkMode>>(new Set())
   const [minMatch, setMinMatch] = useState<number>(DEFAULT_MIN_MATCH)
+  const [showSavedOnly, setShowSavedOnly] = useState(false)
 
   const handleToggleMode = (mode: WorkMode) => {
     setActiveModes((prev) => {
@@ -152,10 +154,15 @@ export default function App() {
     })
   }
 
+  const handleToggleSavedOnly = () => {
+    setShowSavedOnly((prev) => !prev)
+  }
+
   const handleResetFilters = () => {
     setSearchInput('')
     setActiveModes(new Set())
     setMinMatch(DEFAULT_MIN_MATCH)
+    setShowSavedOnly(false)
   }
 
   // Recompute match score dynamically when user profile skills are defined
@@ -174,6 +181,9 @@ export default function App() {
     const query = debouncedSearch.trim().toLowerCase()
 
     return scoredJobs.filter((job) => {
+      // 0. Saved jobs filter
+      if (showSavedOnly && !savedIds.has(job.id)) return false
+
       // 1. Min match score filter (evaluated against dynamically computed match score)
       if (job.matchScore < minMatch) return false
 
@@ -190,17 +200,28 @@ export default function App() {
 
       return true
     })
-  }, [scoredJobs, debouncedSearch, activeModes, minMatch])
+  }, [scoredJobs, debouncedSearch, activeModes, minMatch, showSavedOnly, savedIds])
 
   const hasActiveFilters = Boolean(
-    debouncedSearch || activeModes.size > 0 || minMatch !== DEFAULT_MIN_MATCH,
+    debouncedSearch || activeModes.size > 0 || minMatch !== DEFAULT_MIN_MATCH || showSavedOnly,
   )
   const isFilteredEmpty = !isInitialLoading && jobs.length > 0 && filteredJobs.length === 0
 
   return (
-    <div className="min-h-screen bg-background text-text">
+    <div className="relative min-h-screen bg-background text-text">
+      {/* Subtle background dot-grid pattern behind the whole app (pure CSS, opacity ~3-4%, --color-border dots) */}
+      <div
+        className="pointer-events-none fixed inset-0 z-0 bg-dot-grid"
+        style={{
+          backgroundImage: 'radial-gradient(var(--color-border) 1px, transparent 1px)',
+          backgroundSize: '24px 24px',
+          opacity: 0.04,
+        }}
+        aria-hidden="true"
+      />
+
       {/* Centered responsive container: full width on mobile, capped max-width on desktop */}
-      <main className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
+      <main className="relative z-10 mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Header section with live connection status pill and dynamic stats */}
         <header className="mb-6 flex flex-col gap-2 border-b border-border-soft pb-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -352,6 +373,9 @@ export default function App() {
             onToggle={handleToggleMode}
             minMatch={minMatch}
             onMinMatchChange={setMinMatch}
+            showSavedOnly={showSavedOnly}
+            onToggleSavedOnly={handleToggleSavedOnly}
+            savedCount={savedIds.size}
           />
         </div>
 
@@ -380,16 +404,18 @@ export default function App() {
         </div>
 
         {/* Virtualized Job Feed receiving live derived filteredJobs, loading state, and optimistic save states */}
-        <JobFeed
-          jobs={filteredJobs}
-          isLoading={isInitialLoading}
-          isFiltered={isFilteredEmpty}
-          onResetFilters={handleResetFilters}
-          savedJobIds={savedIds}
-          pendingSaveIds={pendingIds}
-          newJobIds={newJobIds}
-          onToggleSave={toggleSave}
-        />
+        <ErrorBoundary>
+          <JobFeed
+            jobs={filteredJobs}
+            isLoading={isInitialLoading}
+            isFiltered={isFilteredEmpty}
+            onResetFilters={handleResetFilters}
+            savedJobIds={savedIds}
+            pendingSaveIds={pendingIds}
+            newJobIds={newJobIds}
+            onToggleSave={toggleSave}
+          />
+        </ErrorBoundary>
       </main>
     </div>
   )

@@ -56,7 +56,12 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
     >
       <span className="relative flex h-2 w-2">
         {hasPulseRing && (
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-signal opacity-75" />
+          <>
+            {/* Primary fast pulse ring */}
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-signal opacity-75" />
+            {/* Secondary slower offset outer radar ring for authentic live heartbeat */}
+            <span className="absolute inline-flex h-full w-full animate-ping-slow rounded-full bg-signal opacity-50" />
+          </>
         )}
         <span className={`relative inline-flex h-2 w-2 rounded-full ${dotStyles}`} />
       </span>

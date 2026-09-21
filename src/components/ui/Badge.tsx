@@ -40,6 +40,7 @@ export interface MatchBadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
 export const MatchBadge: React.FC<MatchBadgeProps> = ({
   score,
   className = '',
+  style,
   ...props
 }) => {
   const getTone = (val: number): BadgeTone => {
@@ -49,9 +50,23 @@ export const MatchBadge: React.FC<MatchBadgeProps> = ({
   }
 
   const tone = getTone(score)
+  const isSignal = tone === 'signal'
 
   return (
-    <Badge tone={tone} className={`font-mono ${className}`.trim()} {...props}>
+    <Badge
+      tone={tone}
+      className={`font-mono ${isSignal ? 'match-badge-signal' : ''} ${className}`.trim()}
+      style={
+        isSignal
+          ? {
+              backgroundImage:
+                'radial-gradient(ellipse at center, color-mix(in srgb, var(--color-signal) 26%, transparent) 0%, color-mix(in srgb, var(--color-signal) 8%, transparent) 100%)',
+              ...style,
+            }
+          : style
+      }
+      {...props}
+    >
       {score}% match
     </Badge>
   )

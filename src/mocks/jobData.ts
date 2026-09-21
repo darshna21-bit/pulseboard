@@ -17,22 +17,28 @@ export const JOB_TITLES: string[] = [
   'Senior Full Stack Engineer (Python & React)',
   'Full Stack AI Applications Engineer',
 
-  // Backend
+  // Backend & API
+  'Senior Backend API Engineer (Node.js & Express)',
+  'Python & Flask Backend Developer',
   'Senior Go Backend Platform Engineer',
   'Staff Backend Distributed Systems Engineer',
   'Lead Java Microservices Architect',
-  'Senior Node.js / TypeScript Backend Developer',
-  'Backend Database & Storage Engineer',
+  'Systems & High-Performance C++ Engineer',
   'Senior C# / .NET Cloud Services Engineer',
+  'Backend Database & Storage Engineer',
 
   // DevOps & Cloud Infrastructure
   'Senior DevOps & Cloud Infrastructure Engineer',
   'Site Reliability & Kubernetes Platform Specialist',
   'Cloud Platform Engineer (AWS & Terraform)',
+  'Infrastructure & Nginx Gateway Specialist',
 
-  // Data & Machine Learning
+  // Data & AI / ML
   'Senior Data Platform & Pipeline Engineer',
-  'Machine Learning Systems Engineer',
+  'Machine Learning & PyTorch Systems Engineer',
+
+  // QA & Testing
+  'QA & Test Automation Engineer (Jest & Pytest)',
 ]
 
 export const COMPANIES: string[] = [
@@ -70,9 +76,19 @@ export const SALARY_BANDS: string[] = [
 ]
 
 export const SKILL_TAGS: string[] = [
+  // Languages
+  'TypeScript',
+  'JavaScript',
+  'Python',
+  'C++',
+  'Go',
+  'Java',
+  'C#',
+  '.NET',
+  'SQL',
+
   // Frontend
   'React',
-  'TypeScript',
   'Next.js',
   'Tailwind CSS',
   'GraphQL',
@@ -84,36 +100,39 @@ export const SKILL_TAGS: string[] = [
   'WebAssembly',
   'Performance Optimization',
 
-  // Backend & Languages
+  // Backend & Frameworks
   'Node.js',
-  'Python',
-  'Go',
-  'Java',
-  'C#',
-  '.NET',
-  'REST APIs',
+  'Express.js',
+  'Flask',
+  'RESTful API Design',
+  'Microservices',
   'gRPC',
 
   // Databases & Caching
   'PostgreSQL',
+  'MySQL',
   'MongoDB',
   'Redis',
-  'SQL',
 
-  // DevOps, Cloud & Tooling
+  // Cloud & Infrastructure
+  'AWS',
   'Docker',
   'Kubernetes',
-  'AWS',
-  'CI/CD',
+  'Nginx',
   'Git',
+  'CI/CD',
   'Terraform',
   'Kafka',
 
-  // Data & Machine Learning
-  'Machine Learning',
+  // AI & Machine Learning
   'PyTorch',
+  'Machine Learning',
   'Data Pipelines',
   'Elasticsearch',
+
+  // Testing & Quality
+  'Jest',
+  'Pytest',
 ]
 
 export const TAG_POOL = SKILL_TAGS
@@ -122,6 +141,7 @@ const DOMAIN_TAGS: Record<string, string[]> = {
   frontend: [
     'React',
     'TypeScript',
+    'JavaScript',
     'Next.js',
     'Tailwind CSS',
     'GraphQL',
@@ -129,59 +149,95 @@ const DOMAIN_TAGS: Record<string, string[]> = {
     'Design Systems',
     'Micro-frontends',
     'Core Web Vitals',
-    'State Machines',
+    'Jest',
     'Performance Optimization',
   ],
   fullstack: [
     'React',
     'TypeScript',
+    'JavaScript',
     'Next.js',
     'Node.js',
+    'Express.js',
     'Python',
     'PostgreSQL',
     'MongoDB',
-    'REST APIs',
+    'RESTful API Design',
     'GraphQL',
     'Docker',
     'AWS',
     'Git',
+    'Jest',
   ],
-  backend: [
-    'Go',
-    'Python',
-    'Java',
+  backend_api: [
     'Node.js',
+    'Express.js',
+    'Python',
+    'Flask',
+    'PostgreSQL',
+    'MySQL',
+    'MongoDB',
+    'Redis',
+    'SQL',
+    'RESTful API Design',
+    'Microservices',
+    'Docker',
+    'Jest',
+    'Pytest',
+  ],
+  backend_systems: [
+    'Go',
+    'Java',
+    'C++',
     'C#',
     '.NET',
+    'gRPC',
+    'Kafka',
     'PostgreSQL',
     'Redis',
     'SQL',
-    'REST APIs',
-    'gRPC',
-    'Kafka',
+    'Microservices',
+    'RESTful API Design',
     'Docker',
+    'WebAssembly',
+    'Performance Optimization',
   ],
   devops: [
     'Kubernetes',
     'Docker',
     'AWS',
+    'Nginx',
     'CI/CD',
     'Terraform',
     'Git',
+    'Microservices',
     'Go',
     'Python',
     'Redis',
   ],
   data_ai: [
     'Python',
-    'Machine Learning',
     'PyTorch',
+    'Machine Learning',
     'Data Pipelines',
     'SQL',
     'PostgreSQL',
+    'MySQL',
     'Kafka',
     'Elasticsearch',
     'Docker',
+    'Pytest',
+  ],
+  qa_testing: [
+    'Jest',
+    'Pytest',
+    'TypeScript',
+    'JavaScript',
+    'Python',
+    'CI/CD',
+    'Git',
+    'Docker',
+    'RESTful API Design',
   ],
 }
 
@@ -207,31 +263,42 @@ export function getRandomTags(pool: readonly string[] = SKILL_TAGS): string[] {
 /**
  * Generates contextually paired tags for a job title with cross-domain variety.
  */
-function getTagsForJob(title: string): string[] {
+export function getTagsForJob(title: string): string[] {
   let primaryPool: string[]
   const lower = title.toLowerCase()
 
-  if (
+  if (lower.includes('qa') || lower.includes('test')) {
+    primaryPool = DOMAIN_TAGS.qa_testing
+  } else if (
     lower.includes('devops') ||
     lower.includes('reliability') ||
     lower.includes('kubernetes') ||
-    lower.includes('cloud platform')
+    lower.includes('cloud') ||
+    lower.includes('nginx')
   ) {
     primaryPool = DOMAIN_TAGS.devops
   } else if (
     lower.includes('data') ||
     lower.includes('machine learning') ||
+    lower.includes('pytorch') ||
     lower.includes('ai')
   ) {
     primaryPool = DOMAIN_TAGS.data_ai
   } else if (
+    lower.includes('express') ||
+    lower.includes('flask') ||
+    lower.includes('api')
+  ) {
+    primaryPool = DOMAIN_TAGS.backend_api
+  } else if (
     lower.includes('backend') ||
     lower.includes('go') ||
     lower.includes('java') ||
+    lower.includes('c++') ||
     lower.includes('.net') ||
     lower.includes('database')
   ) {
-    primaryPool = DOMAIN_TAGS.backend
+    primaryPool = DOMAIN_TAGS.backend_systems
   } else if (lower.includes('full stack')) {
     primaryPool = DOMAIN_TAGS.fullstack
   } else {
@@ -258,15 +325,15 @@ function getTagsForJob(title: string): string[] {
 /**
  * Generates a single realistic fake job using the value pools.
  */
-export function generateJob(): Job {
+export function generateJob(forcedTitle?: string, forcedTags?: string[]): Job {
   currentFreshnessRank += 1
   const id = `job_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
-  const title = getRandomItem(JOB_TITLES)
+  const title = forcedTitle || getRandomItem(JOB_TITLES)
   const company = getRandomItem(COMPANIES)
   const location = getRandomItem(LOCATIONS)
   const workMode = getRandomItem(WORK_MODES)
   const salaryRange = getRandomItem(SALARY_BANDS)
-  const tags = getTagsForJob(title)
+  const tags = forcedTags || getTagsForJob(title)
   // Randomized match score between 55 and 99 (simulating semantic similarity output)
   const matchScore = Math.floor(Math.random() * 45) + 55
 
@@ -286,10 +353,62 @@ export function generateJob(): Job {
 
 /**
  * Generates an initial batch of count jobs, sorted by matchScore descending.
+ * Seeds diverse initial roles to ensure full coverage across all requested technologies.
  */
 export function generateInitialBatch(count: number): Job[] {
+  const seedArchetypes: Array<{ title: string; tags: string[] }> = [
+    {
+      title: 'QA & Test Automation Engineer (Jest & Pytest)',
+      tags: ['Jest', 'Pytest', 'JavaScript', 'CI/CD', 'Git'],
+    },
+    {
+      title: 'Systems & High-Performance C++ Engineer',
+      tags: ['C++', 'Docker', 'SQL', 'WebAssembly', 'Microservices'],
+    },
+    {
+      title: 'Python & Flask Backend Developer',
+      tags: ['Python', 'Flask', 'MySQL', 'Redis', 'Pytest'],
+    },
+    {
+      title: 'Senior Backend API Engineer (Node.js & Express)',
+      tags: ['Node.js', 'Express.js', 'MongoDB', 'RESTful API Design', 'Jest'],
+    },
+    {
+      title: 'Site Reliability & Kubernetes Platform Specialist',
+      tags: ['Kubernetes', 'Docker', 'Nginx', 'AWS', 'Git'],
+    },
+    {
+      title: 'Machine Learning & PyTorch Systems Engineer',
+      tags: ['Python', 'PyTorch', 'Machine Learning', 'Data Pipelines', 'Docker'],
+    },
+    {
+      title: 'Senior React / TypeScript Developer',
+      tags: ['React', 'TypeScript', 'JavaScript', 'Tailwind CSS', 'WebSockets'],
+    },
+    {
+      title: 'Staff Backend Distributed Systems Engineer',
+      tags: ['Go', 'PostgreSQL', 'Redis', 'Microservices', 'Kafka'],
+    },
+    {
+      title: 'Cloud Platform Engineer (AWS & Terraform)',
+      tags: ['AWS', 'Terraform', 'CI/CD', 'Kubernetes', 'Docker'],
+    },
+    {
+      title: 'Full Stack React & Node Engineer',
+      tags: ['React', 'Node.js', 'PostgreSQL', 'RESTful API Design', 'Docker'],
+    },
+  ]
+
   const jobs: Job[] = []
-  for (let i = 0; i < count; i++) {
+
+  // Add seeded archetypes up to count
+  for (let i = 0; i < Math.min(count, seedArchetypes.length); i++) {
+    const archetype = seedArchetypes[i]
+    jobs.push(generateJob(archetype.title, archetype.tags))
+  }
+
+  // Fill remaining slots with dynamic randomized jobs
+  while (jobs.length < count) {
     jobs.push(generateJob())
   }
 

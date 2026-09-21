@@ -39,15 +39,17 @@ export function isSkillMatch(profileSkill: string, jobTag: string): boolean {
  *
  *     cosine_similarity(u, v) = (u · v) / (||u|| * ||v||)
  *
- * Here on the frontend telemetry client, we compute an overlap ratio between normalized profile skills
- * and job tags, scale the ratio to a realistic 55–99% semantic match range, and blend it with the
- * job's base match score (60% weight on tag overlap, 40% on base score) so the result behaves like a
- * continuous, realistic semantic affinity score rather than a binary keyword hit.
+ * Here on the frontend telemetry client:
+ * - When no profile skills are entered, each job's baseline random score (55–99%) is preserved.
+ * - When profile skills are entered but a job has ZERO matching tags, it is assigned a low non-relevant
+ *   score (20–35%) so it honestly fails the default 50% minimum match threshold.
+ * - When a job has partial or full overlap (1+ matching tags), its score scales into the 60–99%
+ *   range and blends with the baseline score (60/40 weighting) to produce a realistic continuous score.
  *
  * @param profileSkills - Array of skill strings extracted from the user profile
  * @param jobTags - Array of technology/skill tags declared on the job listing
  * @param originalScore - The baseline match score of the job listing (defaults to 75)
- * @returns An integer match percentage clamped between 55 and 99
+ * @returns An integer match percentage clamped between 20 and 99
  */
 export function computeMatchScore(
   profileSkills: string[],
@@ -72,15 +74,24 @@ export function computeMatchScore(
     }
   }
 
+  // If there is zero skill overlap, assign a low non-relevant score (20–35%).
+  // This honestly indicates irrelevance and ensures the role fails deliberate
+  // minimum match thresholds (such as the default 50% filter) rather than
+  // falsely inheriting an inflated baseline score.
+  if (matches === 0) {
+    const lowScore = 20 + Math.round((originalScore / 100) * 15) // maps to 28–35%
+    return Math.min(35, Math.max(20, lowScore))
+  }
+
   // Calculate tag overlap fraction (0.0 to 1.0)
   const overlapRatio = matches / jobTags.length
 
-  // Scale overlap to a 55–99 range (0% overlap -> 55, 100% overlap -> 99)
-  const scaledOverlap = 55 + overlapRatio * (99 - 55)
+  // Scale overlap to a 60–99 range for partial-to-full matches
+  const scaledOverlap = 60 + overlapRatio * (99 - 60)
 
   // Blend: 60% weight on tag overlap, 40% weight on original score
   const blendedScore = Math.round(0.6 * scaledOverlap + 0.4 * originalScore)
 
-  // Clamp within 55–99 range
+  // Clamp within 55–99 range for matched jobs
   return Math.min(99, Math.max(55, blendedScore))
 }
