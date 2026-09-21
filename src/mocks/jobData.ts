@@ -244,6 +244,11 @@ const DOMAIN_TAGS: Record<string, string[]> = {
 // Monotonically increasing rank counter for job freshness
 let currentFreshnessRank = 0
 
+export function getNextFreshnessRank(): number {
+  currentFreshnessRank += 1
+  return currentFreshnessRank
+}
+
 /**
  * Returns a random element from an array.
  */
