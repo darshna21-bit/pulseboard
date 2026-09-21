@@ -134,10 +134,11 @@ export default function App() {
   }, [profileSkills, jobs])
 
   // Search & Filter state
+  const DEFAULT_MIN_MATCH = 50
   const [searchInput, setSearchInput] = useState('')
   const debouncedSearch = useDebounce(searchInput, 300)
   const [activeModes, setActiveModes] = useState<Set<WorkMode>>(new Set())
-  const [minMatch, setMinMatch] = useState<number>(0)
+  const [minMatch, setMinMatch] = useState<number>(DEFAULT_MIN_MATCH)
 
   const handleToggleMode = (mode: WorkMode) => {
     setActiveModes((prev) => {
@@ -154,7 +155,7 @@ export default function App() {
   const handleResetFilters = () => {
     setSearchInput('')
     setActiveModes(new Set())
-    setMinMatch(0)
+    setMinMatch(DEFAULT_MIN_MATCH)
   }
 
   // Recompute match score dynamically when user profile skills are defined
@@ -191,7 +192,9 @@ export default function App() {
     })
   }, [scoredJobs, debouncedSearch, activeModes, minMatch])
 
-  const hasActiveFilters = Boolean(debouncedSearch || activeModes.size > 0 || minMatch > 0)
+  const hasActiveFilters = Boolean(
+    debouncedSearch || activeModes.size > 0 || minMatch !== DEFAULT_MIN_MATCH,
+  )
   const isFilteredEmpty = !isInitialLoading && jobs.length > 0 && filteredJobs.length === 0
 
   return (

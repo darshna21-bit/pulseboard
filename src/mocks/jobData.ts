@@ -1,6 +1,7 @@
 import type { Job, WorkMode } from '../types/job'
 
 export const JOB_TITLES: string[] = [
+  // Frontend
   'Senior Frontend Engineer',
   'Staff UI Platform Architect',
   'Lead Design Systems Engineer',
@@ -9,8 +10,29 @@ export const JOB_TITLES: string[] = [
   'Web Performance Optimization Engineer',
   'Frontend Core Infrastructure Engineer',
   'UI/UX Systems Technologist',
-  'Full Stack React & Node Engineer',
   'Senior Web Platform Architect',
+
+  // Full Stack
+  'Full Stack React & Node Engineer',
+  'Senior Full Stack Engineer (Python & React)',
+  'Full Stack AI Applications Engineer',
+
+  // Backend
+  'Senior Go Backend Platform Engineer',
+  'Staff Backend Distributed Systems Engineer',
+  'Lead Java Microservices Architect',
+  'Senior Node.js / TypeScript Backend Developer',
+  'Backend Database & Storage Engineer',
+  'Senior C# / .NET Cloud Services Engineer',
+
+  // DevOps & Cloud Infrastructure
+  'Senior DevOps & Cloud Infrastructure Engineer',
+  'Site Reliability & Kubernetes Platform Specialist',
+  'Cloud Platform Engineer (AWS & Terraform)',
+
+  // Data & Machine Learning
+  'Senior Data Platform & Pipeline Engineer',
+  'Machine Learning Systems Engineer',
 ]
 
 export const COMPANIES: string[] = [
@@ -48,19 +70,120 @@ export const SALARY_BANDS: string[] = [
 ]
 
 export const SKILL_TAGS: string[] = [
+  // Frontend
   'React',
   'TypeScript',
   'Next.js',
+  'Tailwind CSS',
+  'GraphQL',
   'WebSockets',
   'Design Systems',
-  'Core Web Vitals',
-  'Tailwind CSS',
-  'State Machines',
-  'GraphQL',
   'Micro-frontends',
-  'Performance Optimization',
+  'Core Web Vitals',
+  'State Machines',
   'WebAssembly',
+  'Performance Optimization',
+
+  // Backend & Languages
+  'Node.js',
+  'Python',
+  'Go',
+  'Java',
+  'C#',
+  '.NET',
+  'REST APIs',
+  'gRPC',
+
+  // Databases & Caching
+  'PostgreSQL',
+  'MongoDB',
+  'Redis',
+  'SQL',
+
+  // DevOps, Cloud & Tooling
+  'Docker',
+  'Kubernetes',
+  'AWS',
+  'CI/CD',
+  'Git',
+  'Terraform',
+  'Kafka',
+
+  // Data & Machine Learning
+  'Machine Learning',
+  'PyTorch',
+  'Data Pipelines',
+  'Elasticsearch',
 ]
+
+export const TAG_POOL = SKILL_TAGS
+
+const DOMAIN_TAGS: Record<string, string[]> = {
+  frontend: [
+    'React',
+    'TypeScript',
+    'Next.js',
+    'Tailwind CSS',
+    'GraphQL',
+    'WebSockets',
+    'Design Systems',
+    'Micro-frontends',
+    'Core Web Vitals',
+    'State Machines',
+    'Performance Optimization',
+  ],
+  fullstack: [
+    'React',
+    'TypeScript',
+    'Next.js',
+    'Node.js',
+    'Python',
+    'PostgreSQL',
+    'MongoDB',
+    'REST APIs',
+    'GraphQL',
+    'Docker',
+    'AWS',
+    'Git',
+  ],
+  backend: [
+    'Go',
+    'Python',
+    'Java',
+    'Node.js',
+    'C#',
+    '.NET',
+    'PostgreSQL',
+    'Redis',
+    'SQL',
+    'REST APIs',
+    'gRPC',
+    'Kafka',
+    'Docker',
+  ],
+  devops: [
+    'Kubernetes',
+    'Docker',
+    'AWS',
+    'CI/CD',
+    'Terraform',
+    'Git',
+    'Go',
+    'Python',
+    'Redis',
+  ],
+  data_ai: [
+    'Python',
+    'Machine Learning',
+    'PyTorch',
+    'Data Pipelines',
+    'SQL',
+    'PostgreSQL',
+    'Kafka',
+    'Elasticsearch',
+    'Docker',
+  ],
+}
 
 // Monotonically increasing rank counter for job freshness
 let currentFreshnessRank = 0
@@ -73,12 +196,63 @@ function getRandomItem<T>(arr: readonly T[]): T {
 }
 
 /**
- * Returns a randomized subset of tags (3 to 5 tags).
+ * Returns a randomized subset of tags (3 to 5 tags) from a pool.
  */
-function getRandomTags(pool: readonly string[]): string[] {
+export function getRandomTags(pool: readonly string[] = SKILL_TAGS): string[] {
   const shuffled = [...pool].sort(() => 0.5 - Math.random())
   const count = Math.floor(Math.random() * 3) + 3 // 3, 4, or 5 tags
   return shuffled.slice(0, count)
+}
+
+/**
+ * Generates contextually paired tags for a job title with cross-domain variety.
+ */
+function getTagsForJob(title: string): string[] {
+  let primaryPool: string[]
+  const lower = title.toLowerCase()
+
+  if (
+    lower.includes('devops') ||
+    lower.includes('reliability') ||
+    lower.includes('kubernetes') ||
+    lower.includes('cloud platform')
+  ) {
+    primaryPool = DOMAIN_TAGS.devops
+  } else if (
+    lower.includes('data') ||
+    lower.includes('machine learning') ||
+    lower.includes('ai')
+  ) {
+    primaryPool = DOMAIN_TAGS.data_ai
+  } else if (
+    lower.includes('backend') ||
+    lower.includes('go') ||
+    lower.includes('java') ||
+    lower.includes('.net') ||
+    lower.includes('database')
+  ) {
+    primaryPool = DOMAIN_TAGS.backend
+  } else if (lower.includes('full stack')) {
+    primaryPool = DOMAIN_TAGS.fullstack
+  } else {
+    primaryPool = DOMAIN_TAGS.frontend
+  }
+
+  // Shuffle primary pool and pick 2-3 tags
+  const shuffledPrimary = [...primaryPool].sort(() => 0.5 - Math.random())
+  const primaryCount = Math.floor(Math.random() * 2) + 2 // 2 or 3 tags
+  const selectedPrimary = shuffledPrimary.slice(0, primaryCount)
+
+  // Shuffle global pool and pick 1-2 tags to provide cross-domain variety
+  const shuffledGlobal = [...SKILL_TAGS].sort(() => 0.5 - Math.random())
+  const globalCount = Math.floor(Math.random() * 2) + 1 // 1 or 2 tags
+  const selectedGlobal = shuffledGlobal.slice(0, globalCount)
+
+  // Combine and deduplicate
+  const combined = Array.from(new Set([...selectedPrimary, ...selectedGlobal]))
+  // Ensure between 3 and 5 tags
+  const targetCount = Math.min(5, Math.max(3, combined.length))
+  return combined.slice(0, targetCount)
 }
 
 /**
@@ -92,7 +266,7 @@ export function generateJob(): Job {
   const location = getRandomItem(LOCATIONS)
   const workMode = getRandomItem(WORK_MODES)
   const salaryRange = getRandomItem(SALARY_BANDS)
-  const tags = getRandomTags(SKILL_TAGS)
+  const tags = getTagsForJob(title)
   // Randomized match score between 55 and 99 (simulating semantic similarity output)
   const matchScore = Math.floor(Math.random() * 45) + 55
 
