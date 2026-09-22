@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Job, WorkMode } from './types/job'
-import { generateInitialBatch } from './mocks/jobData'
+import { fetchInitialJobs } from './mocks/mockApi'
 import { JobFeed } from './components/JobFeed'
 import { SearchBar } from './components/SearchBar'
 import { FilterPanel } from './components/FilterPanel'
@@ -13,25 +13,38 @@ import { useSavedJobs } from './hooks/useSavedJobs'
 import { computeMatchScore, isSkillMatch } from './utils/matchScore'
 
 export default function App() {
-  // Realistic initial loading simulation (shows skeletons for ~650ms)
+  // Realistic initial loading & error state for simulated REST API
   const [isInitialLoading, setIsInitialLoading] = useState(true)
+  const [fetchError, setFetchError] = useState<string | null>(null)
   const [jobs, setJobs] = useState<Job[]>([])
   const [newJobIds, setNewJobIds] = useState<Set<string>>(new Set())
 
-  // Initial fetch simulation
-  useEffect(() => {
-    const timer = setTimeout(() => {
+  // Asynchronous REST API snapshot retrieval with automated retry capability
+  const loadInitialJobs = useCallback(async () => {
+    setIsInitialLoading(true)
+    setFetchError(null)
+    try {
+      const initial = await fetchInitialJobs(24)
       setJobs((prev) => {
-        const initial = generateInitialBatch(15)
         const existingIds = new Set(prev.map((j) => j.id))
         const deduplicated = initial.filter((j) => !existingIds.has(j.id))
         return [...prev, ...deduplicated].slice(0, 400)
       })
+    } catch (err) {
+      console.error('[App] Failed to load initial jobs:', err)
+      setFetchError(
+        err instanceof Error
+          ? err.message
+          : "Couldn't load jobs — check your connection",
+      )
+    } finally {
       setIsInitialLoading(false)
-    }, 650) // 500-800ms loading realism window
-
-    return () => clearTimeout(timer)
+    }
   }, [])
+
+  useEffect(() => {
+    loadInitialJobs()
+  }, [loadInitialJobs])
 
   // Timers to clear the temporary "isNew" highlight after ~4 seconds
   const newJobTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
@@ -227,7 +240,7 @@ export default function App() {
 
           <div className="mt-2 flex items-center gap-3 sm:mt-0">
             <span className="inline-flex items-center rounded-full bg-surface-raised px-3 py-1 text-xs font-medium text-text-muted border border-border-soft">
-              {isInitialLoading ? 'Fetching...' : `${jobs.length} roles active`}
+              {isInitialLoading ? 'Fetching...' : fetchError ? 'Offline' : `${jobs.length} roles active`}
             </span>
             {savedIds.size > 0 && (
               <span className="inline-flex items-center rounded-full bg-signal/15 px-3 py-1 text-xs font-medium text-signal border border-signal/30">
@@ -373,6 +386,8 @@ export default function App() {
           <span>
             {isInitialLoading ? (
               <span>Loading telemetry feed...</span>
+            ) : fetchError ? (
+              <span className="text-red-soft font-medium">Connection failed</span>
             ) : (
               <span>
                 Showing <strong className="font-semibold text-text">{filteredJobs.length}</strong> of{' '}
@@ -380,7 +395,7 @@ export default function App() {
               </span>
             )}
           </span>
-          {hasActiveFilters && (
+          {hasActiveFilters && !fetchError && (
             <button
               type="button"
               onClick={handleResetFilters}
@@ -392,12 +407,14 @@ export default function App() {
           )}
         </div>
 
-        {/* Virtualized Job Feed receiving live derived filteredJobs, loading state, and optimistic save states */}
+        {/* Virtualized Job Feed receiving live derived filteredJobs, loading state, error handling, and optimistic save states */}
         <ErrorBoundary>
           <JobFeed
             jobs={filteredJobs}
             isLoading={isInitialLoading}
             isFiltered={isFilteredEmpty}
+            error={fetchError}
+            onRetry={loadInitialJobs}
             onResetFilters={handleResetFilters}
             savedJobIds={savedIds}
             pendingSaveIds={pendingIds}

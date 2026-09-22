@@ -15,6 +15,8 @@ export interface JobFeedProps {
   newJobIds?: Set<string>
   onToggleSave?: (id: string) => void
   className?: string
+  error?: string | null
+  onRetry?: () => void
 }
 
 export const JobFeed: React.FC<JobFeedProps> = ({
@@ -27,6 +29,8 @@ export const JobFeed: React.FC<JobFeedProps> = ({
   newJobIds = new Set(),
   onToggleSave = () => {},
   className = '',
+  error = null,
+  onRetry,
 }) => {
   const parentRef = useRef<HTMLDivElement>(null)
 
@@ -46,6 +50,45 @@ export const JobFeed: React.FC<JobFeedProps> = ({
         <JobCardSkeleton />
         <JobCardSkeleton />
       </div>
+    )
+  }
+
+  // Error state: displayed when initial or retry fetch encounters a network failure
+  if (error) {
+    return (
+      <Card className={`text-center py-12 px-6 flex flex-col items-center justify-center border-red-soft/30 bg-surface/90 ${className}`.trim()}>
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-soft/15 text-red-soft mb-3 border border-red-soft/30">
+          <svg
+            className="h-6 w-6 stroke-current fill-none"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            strokeWidth={1.75}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+        </div>
+        <h2 className="font-display text-base font-semibold text-text">
+          Couldn't load jobs — check your connection
+        </h2>
+        <p className="mt-1.5 max-w-sm text-sm text-text-muted">
+          {error}
+        </p>
+        {onRetry && (
+          <button
+            type="button"
+            onClick={onRetry}
+            className="mt-4 inline-flex items-center rounded-lg bg-surface-raised px-4 py-1.5 text-xs font-medium text-signal border border-signal/30 hover:bg-signal/15 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal"
+          >
+            Retry
+          </button>
+        )}
+      </Card>
     )
   }
 
