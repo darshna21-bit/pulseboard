@@ -13,10 +13,17 @@ import { useSavedJobs } from './hooks/useSavedJobs'
 import { computeMatchScore, isSkillMatch } from './utils/matchScore'
 
 export default function App() {
+  // Owns optimistic bookmark state with automated error rollback and localStorage persistence
+  const { savedIds, savedJobs, pendingIds, toggleSave } = useSavedJobs()
+  const savedJobsRef = useRef(savedJobs)
+  useEffect(() => {
+    savedJobsRef.current = savedJobs
+  }, [savedJobs])
+
   // Realistic initial loading & error state for simulated REST API
   const [isInitialLoading, setIsInitialLoading] = useState(true)
   const [fetchError, setFetchError] = useState<string | null>(null)
-  const [jobs, setJobs] = useState<Job[]>([])
+  const [jobs, setJobs] = useState<Job[]>(() => savedJobs)
   const [newJobIds, setNewJobIds] = useState<Set<string>>(new Set())
 
   // Asynchronous REST API snapshot retrieval with automated retry capability
@@ -28,7 +35,10 @@ export default function App() {
       setJobs((prev) => {
         const existingIds = new Set(prev.map((j) => j.id))
         const deduplicated = initial.filter((j) => !existingIds.has(j.id))
-        return [...prev, ...deduplicated].slice(0, 400)
+        const merged = [...prev, ...deduplicated]
+        const mergedIds = new Set(merged.map((j) => j.id))
+        const missingSaved = savedJobsRef.current.filter((sj) => !mergedIds.has(sj.id))
+        return [...missingSaved, ...merged].slice(0, 400)
       })
     } catch (err) {
       console.error('[App] Failed to load initial jobs:', err)
@@ -86,9 +96,6 @@ export default function App() {
 
   // Owns real-time connection lifecycle & auto-reconnect backoff
   const { connection } = useJobSocket(handleNewJob)
-
-  // Owns optimistic bookmark state with automated error rollback
-  const { savedIds, pendingIds, toggleSave } = useSavedJobs()
 
   // Candidate Target Profile state for dynamic match scoring
   const [profileInput, setProfileInput] = useState('')
@@ -197,8 +204,8 @@ export default function App() {
       // 0. Saved jobs filter
       if (showSavedOnly && !savedIds.has(job.id)) return false
 
-      // 1. Min match score filter (evaluated against dynamically computed match score)
-      if (job.matchScore < minMatch) return false
+      // 1. Min match score filter (only applied once candidate profile skills are defined)
+      if (profileSkills.length > 0 && job.matchScore < minMatch) return false
 
       // 2. Work mode filter (if any selected, otherwise show all)
       if (activeModes.size > 0 && !activeModes.has(job.workMode)) return false
@@ -213,7 +220,7 @@ export default function App() {
 
       return true
     })
-  }, [scoredJobs, debouncedSearch, activeModes, minMatch, showSavedOnly, savedIds])
+  }, [scoredJobs, debouncedSearch, activeModes, minMatch, showSavedOnly, savedIds, profileSkills])
 
   const hasActiveFilters = Boolean(
     debouncedSearch || activeModes.size > 0 || minMatch !== DEFAULT_MIN_MATCH || showSavedOnly,
@@ -420,6 +427,7 @@ export default function App() {
             pendingSaveIds={pendingIds}
             newJobIds={newJobIds}
             onToggleSave={toggleSave}
+            hasProfileSkills={profileSkills.length > 0}
           />
         </ErrorBoundary>
       </main>

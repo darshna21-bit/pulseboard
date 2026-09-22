@@ -13,7 +13,8 @@ export interface JobFeedProps {
   savedJobIds?: Set<string>
   pendingSaveIds?: Set<string>
   newJobIds?: Set<string>
-  onToggleSave?: (id: string) => void
+  onToggleSave?: (job: Job) => void
+  hasProfileSkills?: boolean
   className?: string
   error?: string | null
   onRetry?: () => void
@@ -28,6 +29,7 @@ export const JobFeed: React.FC<JobFeedProps> = ({
   pendingSaveIds = new Set(),
   newJobIds = new Set(),
   onToggleSave = () => {},
+  hasProfileSkills = false,
   className = '',
   error = null,
   onRetry,
@@ -173,6 +175,7 @@ export const JobFeed: React.FC<JobFeedProps> = ({
                   isPending={pendingSaveIds.has(job.id)}
                   isNew={newJobIds.has(job.id)}
                   onToggleSave={onToggleSave}
+                  hasProfileSkills={hasProfileSkills}
                   ariaPosInset={virtualItem.index + 1}
                   ariaSetSize={jobs.length}
                 />

@@ -34,15 +34,29 @@ export const Badge: React.FC<BadgeProps> = ({
 }
 
 export interface MatchBadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
-  score: number
+  score?: number | null
+  isScored?: boolean
 }
 
 export const MatchBadge: React.FC<MatchBadgeProps> = ({
   score,
+  isScored = true,
   className = '',
   style,
   ...props
 }) => {
+  if (!isScored || score == null) {
+    return (
+      <Badge
+        tone="muted"
+        className={`font-mono border-dashed border-border-soft text-text-muted text-[11px] ${className}`.trim()}
+        {...props}
+      >
+        — not scored
+      </Badge>
+    )
+  }
+
   const getTone = (val: number): BadgeTone => {
     if (val >= 85) return 'signal'
     if (val >= 70) return 'amber'
@@ -71,3 +85,4 @@ export const MatchBadge: React.FC<MatchBadgeProps> = ({
     </Badge>
   )
 }
+

@@ -8,7 +8,8 @@ export interface JobCardProps {
   isSaved: boolean
   isPending: boolean
   isNew: boolean
-  onToggleSave: (id: string) => void
+  onToggleSave: (job: Job) => void
+  hasProfileSkills?: boolean
   ariaPosInset?: number
   ariaSetSize?: number
 }
@@ -30,6 +31,7 @@ export const JobCard: React.FC<JobCardProps> = ({
   isPending,
   isNew,
   onToggleSave,
+  hasProfileSkills = false,
   ariaPosInset,
   ariaSetSize,
 }) => {
@@ -71,7 +73,7 @@ export const JobCard: React.FC<JobCardProps> = ({
         </div>
 
         <div className="shrink-0">
-          <MatchBadge score={job.matchScore} />
+          <MatchBadge score={job.matchScore} isScored={hasProfileSkills} />
         </div>
       </div>
 
@@ -99,7 +101,7 @@ export const JobCard: React.FC<JobCardProps> = ({
 
         <button
           type="button"
-          onClick={() => onToggleSave(job.id)}
+          onClick={() => onToggleSave(job)}
           disabled={isPending}
           aria-label={
             isSaved
