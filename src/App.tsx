@@ -262,7 +262,7 @@ export default function App() {
           aria-labelledby="profile-heading"
           className="mb-4 rounded-xl border border-signal/25 bg-surface/80 p-4 shadow-sm backdrop-blur-sm transition-all hover:border-signal/40"
         >
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 mb-2.5">
+          <div className="flex items-center justify-between gap-2 mb-2.5">
             <label
               id="profile-heading"
               htmlFor="profile-skills-input"
@@ -289,23 +289,9 @@ export default function App() {
               </span>
             </label>
 
-            {profileSkills.length > 0 ? (
-              matchedProfileSkills.length > 0 ? (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-signal/15 px-2.5 py-0.5 text-xs font-medium text-signal border border-signal/30 self-start sm:self-auto">
-                  <span className="h-1.5 w-1.5 rounded-full bg-signal animate-pulse" />
-                  {matchedProfileSkills.length}{' '}
-                  {matchedProfileSkills.length === 1 ? 'skill' : 'skills'} matched
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-raised px-2.5 py-0.5 text-xs font-medium text-text-muted border border-border-soft self-start sm:self-auto">
-                  0 matched skills
-                </span>
-              )
-            ) : (
-              <span className="text-[11px] text-text-faint hidden sm:inline">
-                Type or paste skills to tailor scores
-              </span>
-            )}
+            <span className="text-[11px] text-text-faint hidden sm:inline">
+              Type or paste skills to tailor scores
+            </span>
           </div>
 
           <div className="relative">
