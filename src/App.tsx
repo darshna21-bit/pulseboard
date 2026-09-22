@@ -67,32 +67,89 @@ export default function App() {
     }
   }, [])
 
-  // Callback for live incoming WebSocket jobs
-  const handleNewJob = useCallback((incomingJob: Job) => {
-    setJobs((prev) => {
-      // Prevent duplicate job IDs in telemetry
-      if (prev.some((j) => j.id === incomingJob.id)) return prev
-      return [incomingJob, ...prev].slice(0, 400)
-    })
+  // Live-stream pause & buffering flow control
+  const [isStreamPaused, setIsStreamPaused] = useState(false)
+  const isStreamPausedRef = useRef(isStreamPaused)
+  useEffect(() => {
+    isStreamPausedRef.current = isStreamPaused
+  }, [isStreamPaused])
 
-    // Highlight card with isNew for ~4 seconds
+  const [bufferedJobs, setBufferedJobs] = useState<Job[]>([])
+  const bufferedJobsRef = useRef(bufferedJobs)
+  useEffect(() => {
+    bufferedJobsRef.current = bufferedJobs
+  }, [bufferedJobs])
+
+  // Helper to schedule temporary "isNew" highlight for a job
+  const triggerNewHighlight = useCallback((jobId: string) => {
     setNewJobIds((prev) => {
       const next = new Set(prev)
-      next.add(incomingJob.id)
+      next.add(jobId)
       return next
     })
 
     const timer = setTimeout(() => {
       setNewJobIds((prev) => {
         const next = new Set(prev)
-        next.delete(incomingJob.id)
+        next.delete(jobId)
         return next
       })
-      newJobTimersRef.current.delete(incomingJob.id)
+      newJobTimersRef.current.delete(jobId)
     }, 4000)
 
-    newJobTimersRef.current.set(incomingJob.id, timer)
+    newJobTimersRef.current.set(jobId, timer)
   }, [])
+
+  // Callback for live incoming WebSocket jobs
+  const handleNewJob = useCallback((incomingJob: Job) => {
+    // When stream is paused, buffer incoming jobs rather than prepending to visible feed
+    if (isStreamPausedRef.current) {
+      setBufferedJobs((prev) => {
+        if (prev.some((j) => j.id === incomingJob.id)) return prev
+        return [incomingJob, ...prev]
+      })
+      return
+    }
+
+    setJobs((prev) => {
+      // Prevent duplicate job IDs in telemetry
+      if (prev.some((j) => j.id === incomingJob.id)) return prev
+      return [incomingJob, ...prev].slice(0, 400)
+    })
+
+    triggerNewHighlight(incomingJob.id)
+  }, [triggerNewHighlight])
+
+  // Flushes all buffered jobs to the top of the feed and restores live streaming
+  const handleFlushBufferedJobs = useCallback(() => {
+    const buffered = bufferedJobsRef.current
+    if (buffered.length > 0) {
+      setJobs((prev) => {
+        const existingIds = new Set(prev.map((j) => j.id))
+        const deduplicated = buffered.filter((j) => !existingIds.has(j.id))
+        return [...deduplicated, ...prev].slice(0, 400)
+      })
+
+      buffered.forEach((job) => {
+        triggerNewHighlight(job.id)
+      })
+
+      setBufferedJobs([])
+    }
+
+    setIsStreamPaused(false)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [triggerNewHighlight])
+
+  // Toggle pause / resume live stream
+  const handleTogglePause = useCallback(() => {
+    if (isStreamPaused) {
+      // Resuming stream flushes any buffered jobs and restores live updates
+      handleFlushBufferedJobs()
+    } else {
+      setIsStreamPaused(true)
+    }
+  }, [isStreamPaused, handleFlushBufferedJobs])
 
   // Owns real-time connection lifecycle & auto-reconnect backoff
   const { connection } = useJobSocket(handleNewJob)
@@ -239,6 +296,33 @@ export default function App() {
                 Pulseboard
               </h1>
               <ConnectionStatus connection={connection} />
+              <button
+                type="button"
+                onClick={handleTogglePause}
+                aria-label={isStreamPaused ? 'Resume live stream updates' : 'Pause live stream updates'}
+                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium border transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal ${
+                  isStreamPaused
+                    ? 'bg-amber/15 text-amber border-amber/30 hover:bg-amber/25'
+                    : 'bg-surface-raised text-text-muted hover:text-text border-border-soft hover:border-border'
+                }`}
+              >
+                {isStreamPaused ? (
+                  <>
+                    <svg className="w-2.5 h-2.5 fill-current" viewBox="0 0 16 16" aria-hidden="true">
+                      <polygon points="4,2 14,8 4,14" />
+                    </svg>
+                    Resume
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-2.5 h-2.5 fill-current" viewBox="0 0 16 16" aria-hidden="true">
+                      <rect x="3" y="3" width="3" height="10" rx="1" />
+                      <rect x="10" y="3" width="3" height="10" rx="1" />
+                    </svg>
+                    Pause
+                  </>
+                )}
+              </button>
             </div>
             <p className="mt-1 text-sm text-text-muted">
               Live engineering telemetry and real-time job stream
@@ -249,6 +333,11 @@ export default function App() {
             <span className="inline-flex items-center rounded-full bg-surface-raised px-3 py-1 text-xs font-medium text-text-muted border border-border-soft">
               {isInitialLoading ? 'Fetching...' : fetchError ? 'Offline' : `${jobs.length} roles active`}
             </span>
+            {bufferedJobs.length > 0 && (
+              <span className="inline-flex items-center rounded-full bg-amber/15 px-3 py-1 text-xs font-medium text-amber border border-amber/30">
+                {bufferedJobs.length} buffered
+              </span>
+            )}
             {savedIds.size > 0 && (
               <span className="inline-flex items-center rounded-full bg-signal/15 px-3 py-1 text-xs font-medium text-signal border border-signal/30">
                 {savedIds.size} saved
@@ -399,6 +488,26 @@ export default function App() {
             </button>
           )}
         </div>
+
+        {/* Floating pill notification when incoming jobs are buffered while stream is paused */}
+        {bufferedJobs.length > 0 && (
+          <div className="sticky top-4 z-20 mb-3 flex justify-center">
+            <button
+              type="button"
+              onClick={handleFlushBufferedJobs}
+              className="inline-flex items-center gap-2 rounded-full bg-signal px-4 py-1.5 text-xs font-semibold text-background shadow-lg shadow-signal/25 transition-transform hover:scale-105 active:scale-95 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal"
+              aria-label={`${bufferedJobs.length} new ${bufferedJobs.length === 1 ? 'role' : 'roles'} arrived — click to load`}
+            >
+              <span className="h-2 w-2 rounded-full bg-background animate-pulse" />
+              <span>
+                {bufferedJobs.length} new {bufferedJobs.length === 1 ? 'role' : 'roles'} arrived — click to load
+              </span>
+              <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+                <path d="M8 12V4M4 8l4-4 4 4" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          </div>
+        )}
 
         {/* Virtualized Job Feed receiving live derived filteredJobs, loading state, error handling, and optimistic save states */}
         <ErrorBoundary>
