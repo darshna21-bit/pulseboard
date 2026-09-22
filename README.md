@@ -10,6 +10,10 @@
 
 > **Pulseboard** is a high-performance, real-time engineering job telemetry dashboard inspired by high-density developer interfaces (Linear, Datadog, Bloomberg Terminal). It is engineered to solve modern frontend challenges: infinite dynamic data streaming, 60 FPS DOM recycling, resilient WebSocket lifecycle management, optimistic mutations with rollback, and client-side semantic affinity scoring.
 
+<p align="center">
+  <img src="public/og-img.png" alt="Pulseboard Dashboard Preview" width="100%" />
+</p>
+
 ---
 
 ## 🌐 Live Deployment
