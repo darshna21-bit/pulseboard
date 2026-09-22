@@ -230,7 +230,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-background text-text">
       {/* Centered responsive container: full width on mobile, capped max-width on desktop */}
-      <main className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
+      <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Header section with live connection status pill and dynamic stats */}
         <header className="mb-6 flex flex-col gap-2 border-b border-border-soft pb-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
