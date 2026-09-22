@@ -10,6 +10,7 @@ import { Input } from './components/ui/Input'
 import { useDebounce } from './hooks/useDebounce'
 import { useJobSocket } from './hooks/useJobSocket'
 import { useSavedJobs } from './hooks/useSavedJobs'
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import { computeMatchScore, isSkillMatch } from './utils/matchScore'
 
 export default function App() {
@@ -214,10 +215,18 @@ export default function App() {
   // Search & Filter state
   const DEFAULT_MIN_MATCH = 50
   const [searchInput, setSearchInput] = useState('')
+  const searchInputRef = useRef<HTMLInputElement>(null)
   const debouncedSearch = useDebounce(searchInput, 300)
   const [activeModes, setActiveModes] = useState<Set<WorkMode>>(new Set())
   const [minMatch, setMinMatch] = useState<number>(DEFAULT_MIN_MATCH)
   const [showSavedOnly, setShowSavedOnly] = useState(false)
+
+  // Global keyboard shortcuts: '/' focuses search input, 'Escape' clears search text or blurs
+  useKeyboardShortcuts({
+    searchInputRef,
+    searchValue: searchInput,
+    onClearSearch: () => setSearchInput(''),
+  })
 
   const handleToggleMode = (mode: WorkMode) => {
     setActiveModes((prev) => {
@@ -451,7 +460,7 @@ export default function App() {
 
         {/* Search & Filter controls */}
         <div className="mb-5 flex flex-col gap-3">
-          <SearchBar value={searchInput} onChange={setSearchInput} />
+          <SearchBar inputRef={searchInputRef} value={searchInput} onChange={setSearchInput} />
           <FilterPanel
             activeModes={activeModes}
             onToggle={handleToggleMode}

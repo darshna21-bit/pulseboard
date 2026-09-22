@@ -5,12 +5,14 @@ export interface SearchBarProps {
   value: string
   onChange: (value: string) => void
   className?: string
+  inputRef?: React.RefObject<HTMLInputElement | null>
 }
 
 export const SearchBar: React.FC<SearchBarProps> = ({
   value,
   onChange,
   className = '',
+  inputRef,
 }) => {
   return (
     <div className={`relative w-full ${className}`.trim()}>
@@ -32,6 +34,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
       </div>
 
       <Input
+        ref={inputRef}
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -40,12 +43,25 @@ export const SearchBar: React.FC<SearchBarProps> = ({
         className="pl-10 pr-10 h-10 text-sm bg-surface border-border focus-visible:ring-signal"
       />
 
+      {/* Keyboard shortcut hint (Linear / GitHub style) when search is empty */}
+      {value.length === 0 && (
+        <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+          <kbd
+            aria-hidden="true"
+            className="hidden sm:inline-flex items-center justify-center h-5 w-5 rounded border border-border-soft bg-surface-raised text-[11px] font-mono font-medium text-text-muted select-none"
+          >
+            /
+          </kbd>
+        </div>
+      )}
+
       {/* Clear button when search term is active */}
       {value.length > 0 && (
         <button
           type="button"
           onClick={() => onChange('')}
-          aria-label="Clear search input"
+          aria-label="Clear search input (Esc)"
+          title="Clear search (Esc)"
           className="absolute inset-y-0 right-2 my-auto flex h-7 w-7 items-center justify-center rounded text-text-muted hover:text-text cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal"
         >
           <svg
