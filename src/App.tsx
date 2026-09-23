@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Job, WorkMode } from './types/job'
 import { fetchInitialJobs } from './mocks/mockApi'
 import { JobFeed } from './components/JobFeed'
+import { JobDetailDrawer } from './components/JobDetailDrawer'
 import { SearchBar } from './components/SearchBar'
 import { FilterPanel } from './components/FilterPanel'
 import { ConnectionStatus } from './components/ConnectionStatus'
@@ -293,6 +294,27 @@ export default function App() {
   )
   const isFilteredEmpty = !isInitialLoading && jobs.length > 0 && filteredJobs.length === 0
 
+  // Selected job state for detail slide-over drawer
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(null)
+
+  const selectedJob = useMemo(() => {
+    if (!selectedJobId) return null
+    return (
+      scoredJobs.find((j) => j.id === selectedJobId) ??
+      jobs.find((j) => j.id === selectedJobId) ??
+      savedJobs.find((j) => j.id === selectedJobId) ??
+      null
+    )
+  }, [selectedJobId, scoredJobs, jobs, savedJobs])
+
+  const handleOpenDetail = useCallback((job: Job) => {
+    setSelectedJobId(job.id)
+  }, [])
+
+  const handleCloseDetail = useCallback(() => {
+    setSelectedJobId(null)
+  }, [])
+
   return (
     <div className="min-h-screen bg-background text-text">
       {/* Centered responsive container: full width on mobile, capped max-width on desktop */}
@@ -531,10 +553,23 @@ export default function App() {
             pendingSaveIds={pendingIds}
             newJobIds={newJobIds}
             onToggleSave={toggleSave}
+            onOpenDetail={handleOpenDetail}
             hasProfileSkills={profileSkills.length > 0}
           />
         </ErrorBoundary>
       </main>
+
+      {/* Slide-over Job Detail Drawer */}
+      {selectedJob && (
+        <JobDetailDrawer
+          job={selectedJob}
+          onClose={handleCloseDetail}
+          isSaved={savedIds.has(selectedJob.id)}
+          isPending={pendingIds.has(selectedJob.id)}
+          onToggleSave={toggleSave}
+          hasProfileSkills={profileSkills.length > 0}
+        />
+      )}
     </div>
   )
 }

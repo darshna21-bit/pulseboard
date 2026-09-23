@@ -9,6 +9,7 @@ export interface JobCardProps {
   isPending: boolean
   isNew: boolean
   onToggleSave: (job: Job) => void
+  onOpenDetail?: (job: Job) => void
   hasProfileSkills?: boolean
   ariaPosInset?: number
   ariaSetSize?: number
@@ -31,6 +32,7 @@ export const JobCard: React.FC<JobCardProps> = ({
   isPending,
   isNew,
   onToggleSave,
+  onOpenDetail,
   hasProfileSkills = false,
   ariaPosInset,
   ariaSetSize,
@@ -43,11 +45,21 @@ export const JobCard: React.FC<JobCardProps> = ({
 
   return (
     <Card
+      id={`job-card-${job.id}`}
       role="article"
       aria-labelledby={titleId}
       aria-posinset={ariaPosInset}
       aria-setsize={ariaSetSize}
-      className={`relative transition-all duration-200 hover:border-border ${newCardStyles}`}
+      tabIndex={0}
+      onClick={() => onOpenDetail?.(job)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          if ((e.target as HTMLElement).tagName.toLowerCase() === 'button') return
+          e.preventDefault()
+          onOpenDetail?.(job)
+        }
+      }}
+      className={`relative transition-all duration-200 hover:border-border cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal ${newCardStyles}`}
     >
       {/* Top row: Title, company/location, and MatchBadge */}
       <div className="flex items-start justify-between gap-4">
@@ -101,7 +113,13 @@ export const JobCard: React.FC<JobCardProps> = ({
 
         <button
           type="button"
-          onClick={() => onToggleSave(job)}
+          onClick={(e) => {
+            e.stopPropagation()
+            onToggleSave(job)
+          }}
+          onKeyDown={(e) => {
+            e.stopPropagation()
+          }}
           disabled={isPending}
           aria-label={
             isSaved
