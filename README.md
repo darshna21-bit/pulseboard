@@ -1,6 +1,7 @@
 # ⚡ Pulseboard — Real-Time Job Telemetry Dashboard
 
 [![Live Demo](https://img.shields.io/badge/Live_Demo-pulseboard--mocha.vercel.app-35D492?style=for-the-badge&logo=vercel&logoColor=white)](https://pulseboard-mocha.vercel.app/)
+[![CI](https://github.com/darshna21-bit/pulseboard/actions/workflows/ci.yml/badge.svg)](https://github.com/darshna21-bit/pulseboard/actions/workflows/ci.yml)
 [![React 19](https://img.shields.io/badge/React-19.2-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.x-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Tailwind CSS v4](https://img.shields.io/badge/Tailwind_CSS-v4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
@@ -91,6 +92,22 @@ flowchart TD
 ### 5. 🛡️ Scoped Fault Isolation (`src/components/ErrorBoundary.tsx`)
 - Scoped strictly around `<JobFeed>`, preventing anomalous card payloads or virtualizer layout throws from crashing top-level navigation, search, or status pills.
 
+### 6. 🪟 In-Context Job Detail Slide-Over Drawer (`src/components/JobDetailDrawer.tsx`)
+- **Accessible Modal Architecture**: Adheres strictly to WAI-ARIA `dialog` specifications with `aria-modal="true"`, dynamic `aria-labelledby`, focus trapping within the drawer, and focus restoration to the triggering card element on dismissal.
+- **Continuous Reading Context**: Eliminates route changes and preserved background scroll offsets, filters, and WebSocket streaming state. Features capture-phase `Escape` key dismissal, backdrop dismissal, and body scroll locking.
+- **Deterministic Content & State Sync**: Deterministically generates rich role overviews and responsibilities from declared tags, synchronized with optimistic bookmarking.
+
+### 7. ⏸️ Live Stream Flow Control (Pause, Buffer & Flush UX)
+- **Eliminating Scroll Displacement**: Prevents live WebSocket insertions from disorienting the user mid-read. When paused, incoming jobs are collected into a reactive memory buffer.
+- **Discrete Batch Flushing**: Surfaces an interactive floating arrival pill (*"N new roles arrived — click to load"*) that flushes the buffered queue to the top of the feed on user command without disrupting background socket heartbeats.
+
+### 8. ⌨️ Developer-Grade Keyboard Navigation (`src/hooks/useKeyboardShortcuts.ts`)
+- **`/` (Slash) Quick Focus**: Instantly focuses the search input from anywhere on the page, suppressing default browser search hijacking while ignoring keystrokes when typing in text fields.
+- **`Escape` Reset**: Clears active search queries or blurs the search input in a single keystroke. Discoverable via subtle `<kbd>/</kbd>` keycap hints.
+
+### 9. 🤖 Automated Continuous Integration (`.github/workflows/ci.yml`)
+- **Strict Quality Gates**: GitHub Actions pipeline triggered on every push and PR to `main`, validating zero-warning TypeScript compilation (`tsc -b`), Oxlint code analysis, and Vite production bundling on Node.js 20 LTS.
+
 ---
 
 ## 🔀 Branch Strategy & Versions
@@ -121,20 +138,26 @@ This project demonstrates two architectural flavors:
 
 ```
 pulseboard/
-├── public/                     # Static public assets (favicon.svg, icons.svg)
+├── .github/
+│   └── workflows/
+│       └── ci.yml              # GitHub Actions CI workflow (lint + build)
+├── .nvmrc                      # Node.js 20 LTS version declaration
+├── public/                     # Static public assets (favicon.svg, icons.svg, og-img.png)
 ├── src/
 │   ├── assets/                 # SVGs and static visual assets
 │   ├── components/             # Domain UI components
 │   │   ├── ui/                 # Reusable atomic design system (Badge, Card, Button, Input, Skeleton)
-│   │   ├── ConnectionStatus.tsx# Dual-ring pulsing radar heartbeat indicator
+│   │   ├── ConnectionStatus.tsx# Dual-ring pulsing radar heartbeat indicator & stream pause toggle
 │   │   ├── ErrorBoundary.tsx   # React class error boundary for bulkheaded fault recovery
 │   │   ├── FilterPanel.tsx     # WorkMode chips, Saved filter toggle, Min Match range slider
 │   │   ├── JobCard.tsx         # High-density job card with dynamic badges & relative time
+│   │   ├── JobDetailDrawer.tsx # In-context slide-over drawer with focus trap & WAI-ARIA dialog
 │   │   ├── JobFeed.tsx         # Virtualized scroll list with empty, loading, & error states
-│   │   └── SearchBar.tsx       # Instant search input with debounced querying
+│   │   └── SearchBar.tsx       # Instant search input with debounced querying & keyboard hints
 │   ├── hooks/                  # Custom React hooks
 │   │   ├── useDebounce.ts      # Debounces search input (300ms)
 │   │   ├── useJobSocket.ts     # WebSocket lifecycle, reconnect backoff, & message ingestion
+│   │   ├── useKeyboardShortcuts.ts # Global '/' search focus & Escape clear/blur handling
 │   │   └── useSavedJobs.ts     # Optimistic bookmarking with automated rollback & localStorage
 │   ├── mocks/                  # Telemetry simulation engines
 │   │   ├── jobData.ts          # Comprehensive technology tags pool & job generator
